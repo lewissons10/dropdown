@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>State & District Explorer</title>
+
+<style>
+    body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", sans-serif;
+        background: linear-gradient(120deg, #1d2671, #c33764);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .container {
+        background: #fff;
+        width: 420px;
+        padding: 30px;
+        border-radius: 14px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        animation: fadeIn 0.8s ease;
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 6px;
+        color: #333;
+    }
+
+    .subtitle {
+        text-align: center;
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 25px;
+    }
+
+    label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 6px;
+        color: #444;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 16px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+        transition: 0.3s;
+    }
+
+    input:focus, select:focus {
+        border-color: #6a11cb;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(106,17,203,0.15);
+    }
+
+    select:disabled {
+        background: #f2f2f2;
+        cursor: not-allowed;
+    }
+
+    .info {
+        background: #f8f9ff;
+        border-left: 4px solid #6a11cb;
+        padding: 12px;
+        font-size: 14px;
+        display: none;
+        animation: slideUp 0.4s ease;
+    }
+
+    .loading {
+        font-size: 13px;
+        color: #888;
+        display: none;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>State & District Explorer</h2>
+
+
+    <label>Search State</label>
+    <input type="text" id="stateSearch" placeholder="Type to filter states">
+
+    <label>State</label>
+    <select id="stateSelect">
+        <option value="">-- Select State --</option>
+    </select>
+
+    <label>District</label>
+    <select id="districtSelect" disabled>
+        <option value="">-- Select District --</option>
+    </select>
+
+    <div class="loading" id="loading">Loading districts...</div>
+
+    <div class="info" id="info"></div>
+</div>
+
+<script>
+/* JSON-style structured data (API-ready format) */
+const data = {
+    "states": [
+        {
+            "name": "Karnataka",
+            "code": "KA",
+            "region": "South",
+            "districts": ["Bengaluru", "Mysuru", "Mangaluru", "Hubballi"]
+        },
+        {
+            "name": "Maharashtra",
+            "code": "MH",
+            "region": "West",
+            "districts": ["Mumbai", "Pune", "Nagpur", "Nashik"]
+        },
+        {
+            "name": "Tamil Nadu",
+            "code": "TN",
+            "region": "South",
+            "districts": ["Chennai", "Coimbatore", "Madurai", "Trichy"]
+        },
+        {
+            "name": "Kerala",
+            "code": "KL",
+            "region": "South",
+            "districts": ["Thiruvananthapuram", "Kochi", "Kozhikode"]
+        }
+    ]
+};
+
+const stateSelect = document.getElementById("stateSelect");
+const districtSelect = document.getElementById("districtSelect");
+const stateSearch = document.getElementById("stateSearch");
+const infoBox = document.getElementById("info");
+const loading = document.getElementById("loading");
+
+/* Load states */
+function loadStates(states) {
+    stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+    states.forEach((state, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = `${state.name} (${state.code})`;
+        stateSelect.appendChild(option);
+    });
+}
+
+loadStates(data.states);
+
+/* Filter states */
+stateSearch.addEventListener("input", () => {
+    const search = stateSearch.value.toLowerCase();
+    const filtered = data.states.filter(s =>
+        s.name.toLowerCase().includes(search)
+    );
+    loadStates(filtered);
+});
+
+/* Load districts */
+stateSelect.addEventListener("change", () => {
+    districtSelect.innerHTML = '<option value="">-- Select District --</option>';
+    infoBox.style.display = "none";
+
+    if (!stateSelect.value) {
+        districtSelect.disabled = true;
+        return;
+    }
+
+    districtSelect.disabled = true;
+    loading.style.display = "block";
+
+    setTimeout(() => {
+        const state = data.states[stateSelect.value];
+        state.districts.forEach(d => {
+            const opt = document.createElement("option");
+            opt.textContent = d;
+            opt.value = d;
+            districtSelect.appendChild(opt);
+        });
+
+        districtSelect.disabled = false;
+        loading.style.display = "none";
+    }, 600); // simulated API delay
+});
+
+/* Show info */
+districtSelect.addEventListener("change", () => {
+    if (!districtSelect.value) return;
+
+    const state = data.states[stateSelect.value];
+
+    infoBox.style.display = "block";
+    infoBox.innerHTML = `
+        <strong>Selection Summary</strong><br>
+        State: ${state.name} (${state.code})<br>
+        Region: ${state.region}<br>
+        District: ${districtSelect.value}<br>
+        Total Districts: ${state.districts.length}
+    `;
+});
+</script>
+
+</body>
+</html>
